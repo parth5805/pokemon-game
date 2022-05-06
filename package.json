@@ -99,6 +99,7 @@
     "glob-parent": "^5.1.2",
     "graceful-fs": "^4.2.10",
     "growl": "^1.10.5",
+    "hardhat-console": "^1.0.0",
     "has": "^1.0.3",
     "has-flag": "^3.0.0",
     "has-symbols": "^1.0.3",
