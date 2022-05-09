@@ -18,9 +18,10 @@ This structure represents the pokenmon card features
 
     struct pokemonCard{
            uint id;
+           string cardType;
            uint hp;  // number of Health Points (HP)
            string name; // name of pokemon
-           string cardType; //type of card
+           string pokemonType; //type of pokemon card
            string stage;  //stage of pokemon card
            string info; //information about pokenmon card
            string attack;  //number of attack
@@ -33,6 +34,7 @@ This structure represents the energy card features
 */
     struct energyCard{
         uint id;
+        string cardType;
         string name; //energy name
         string color; //name of color
     }
@@ -42,31 +44,32 @@ This structure represents the trainer card features
 */
     struct trainerCard{
         uint id;
+        string cardType;
         string name; //name of trainer
         string taskDetails; //information about task
 
     }
 
-    uint nextEnergyId;
-    uint nextTrainerId;
-    uint nextPokemonId;
+    uint public nextEnergyId;
+    uint public nextTrainerId;
+    uint public nextPokemonId;
 
-    mapping(uint=>pokemonCard) private Pokemon_card_details;
-    mapping(uint=>energyCard)  private Energy_card_details;
-    mapping(uint=>trainerCard) private Trainer_card_details;
+    mapping(uint=>pokemonCard) public Pokemon_card_details;
+    mapping(uint=>energyCard)  public Energy_card_details;
+    mapping(uint=>trainerCard) public Trainer_card_details;
 
-    event pokemonNFT(address indexed _to,uint amount,uint indexed _tokenId,uint _hp,string _name,string _cardType,string _stage,string _info,string _attack,uint _damage,string _weak);
-    event energyNFT(address indexed _to,uint amount,uint indexed _tokenId,string _name,string _color);
-    event trainerNFT(address indexed _to,uint amount,uint indexed _tokenId,string _name,string _taskDetails);
+    event pokemonNFT(address indexed _to,uint amount,uint indexed _tokenId,string _cardType,uint _hp,string _name,string _pokemonType,string _stage,string _info,string _attack,uint _damage,string _weak);
+    event energyNFT(address indexed _to,uint amount,uint indexed _tokenId,string _cardType,string _name,string _color);
+    event trainerNFT(address indexed _to,uint amount,uint indexed _tokenId,string _cardType,string _name,string _taskDetails);
 
 
     constructor() ERC1155("") {}
     
-    function addPokemonCard(address _marketplaceAddress,uint _hp,string memory _name,string memory _cardtype,string memory _stage,string memory _info,string memory _attack,uint _damage,string memory _weak,uint _amount,bytes memory _data) public onlyOwner returns(bool)
+    function addPokemonCard(address _marketplaceAddress,uint _hp,string memory _name,string memory _pokemonType,string memory _stage,string memory _info,string memory _attack,uint _damage,string memory _weak,uint _amount,bytes memory _data) public onlyOwner returns(bool)
     {
     _mint(_marketplaceAddress,nextPokemonId,_amount,_data);
-    Pokemon_card_details[nextPokemonId]=pokemonCard(nextPokemonId,_hp,_name,_cardtype,_stage,_info,_attack,_damage,_weak);
-    emit pokemonNFT(msg.sender,_amount,nextPokemonId,_hp,_name,_cardtype,_stage,_info,_attack,_damage,_weak);
+    Pokemon_card_details[nextPokemonId]=pokemonCard(nextPokemonId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
+    emit pokemonNFT(msg.sender,_amount,nextPokemonId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
     nextPokemonId++;
     return true;
     }
@@ -74,8 +77,8 @@ This structure represents the trainer card features
     function addEnergyCard(address _marketplaceAddress,string memory _name,string memory _color,uint _amount,bytes memory _data) public onlyOwner returns(bool)
     {
     _mint(_marketplaceAddress,nextEnergyId,_amount,_data);
-    Energy_card_details[nextEnergyId]=energyCard(nextEnergyId,_name,_color);
-    emit energyNFT(msg.sender,_amount,nextEnergyId,_name,_color);
+    Energy_card_details[nextEnergyId]=energyCard(nextEnergyId,"energy",_name,_color);
+    emit energyNFT(msg.sender,_amount,nextEnergyId,"energy",_name,_color);
     nextEnergyId++;
     return true;
     }
@@ -84,26 +87,26 @@ This structure represents the trainer card features
     function addTrainerCard(address _marketplaceAddress,string memory _name,string memory _taskdetails,uint _amount,bytes memory _data) public onlyOwner returns(bool)
     {
     _mint(_marketplaceAddress,nextTrainerId,_amount,_data);
-    Trainer_card_details[nextTrainerId]=trainerCard(nextTrainerId,_name,_taskdetails);
-    emit trainerNFT(msg.sender,_amount,nextTrainerId,_name,_taskdetails);
+    Trainer_card_details[nextTrainerId]=trainerCard(nextTrainerId,"trainer",_name,_taskdetails);
+    emit trainerNFT(msg.sender,_amount,nextTrainerId,"trainer",_name,_taskdetails);
     nextTrainerId++;
     return true;
     }
 
-    function fetchPokemonNfts() public view returns(uint[] memory)
+    function fetchPokemonNfts() public view returns(pokemonCard[] memory)
     {
-        uint[] memory pokemonArray=new uint[](nextPokemonId);
+        pokemonCard[] memory pokemonArray=new pokemonCard[](nextPokemonId);
         for(uint i=0;i<nextPokemonId;i++){
-            pokemonArray[i]=Pokemon_card_details[i].id;
+            pokemonArray[i]=Pokemon_card_details[i];
         }
         return pokemonArray;
     }
 
-    function fetchEnergyNfts() public view returns(uint[] memory)
+    function fetchEnergyNfts() public view returns(energyCard[] memory)
     {
-        uint[] memory enerygyArray=new uint[](nextEnergyId);
+        energyCard[] memory enerygyArray=new energyCard[](nextEnergyId);
         for(uint i=0;i<nextEnergyId;i++){
-            enerygyArray[i]=Energy_card_details[i].id;
+            enerygyArray[i]=Energy_card_details[i];
         }
         return enerygyArray;
     }
