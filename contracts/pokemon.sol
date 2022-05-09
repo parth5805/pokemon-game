@@ -40,7 +40,7 @@ This structure represents the energy card features
     }
 
 /**
-This structure represents the trainer card features
+This structure represents the trainer card feature
 */
     struct trainerCard{
         uint id;
