@@ -50,7 +50,9 @@ This structure represents the trainer card feature
 
     }
 
-    uint public nextId=100; //counter starts from 100
+    uint public nextEnergyId;
+    uint public nextTrainerId;
+    uint public nextPokemonId;
 
     mapping(uint=>pokemonCard) public Pokemon_card_details;
     mapping(uint=>energyCard)  public Energy_card_details;
@@ -65,113 +67,59 @@ This structure represents the trainer card feature
     
     function addPokemonCard(address _marketplaceAddress,uint _hp,string memory _name,string memory _pokemonType,string memory _stage,string memory _info,string memory _attack,uint _damage,string memory _weak,uint _amount,bytes memory _data) public onlyOwner returns(bool)
     {
-    _mint(_marketplaceAddress,nextId,_amount,_data);
-    Pokemon_card_details[nextId]=pokemonCard(nextId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
-    emit pokemonNFT(msg.sender,_amount,nextId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
-    nextId++;
+    _mint(_marketplaceAddress,nextPokemonId,_amount,_data);
+    Pokemon_card_details[nextPokemonId]=pokemonCard(nextPokemonId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
+    emit pokemonNFT(msg.sender,_amount,nextPokemonId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
+    nextPokemonId++;
     return true;
     }
     
     function addEnergyCard(address _marketplaceAddress,string memory _name,string memory _color,uint _amount,bytes memory _data) public onlyOwner returns(bool)
     {
-    _mint(_marketplaceAddress,nextId,_amount,_data);
-    Energy_card_details[nextId]=energyCard(nextId,"energy",_name,_color);
-    emit energyNFT(msg.sender,_amount,nextId,"energy",_name,_color);
-    nextId++;
+    _mint(_marketplaceAddress,nextEnergyId,_amount,_data);
+    Energy_card_details[nextEnergyId]=energyCard(nextEnergyId,"energy",_name,_color);
+    emit energyNFT(msg.sender,_amount,nextEnergyId,"energy",_name,_color);
+    nextEnergyId++;
     return true;
     }
 
     
     function addTrainerCard(address _marketplaceAddress,string memory _name,string memory _taskdetails,uint _amount,bytes memory _data) public onlyOwner returns(bool)
     {
-    _mint(_marketplaceAddress,nextId,_amount,_data);
-    Trainer_card_details[nextId]=trainerCard(nextId,"trainer",_name,_taskdetails);
-    emit trainerNFT(msg.sender,_amount,nextId,"trainer",_name,_taskdetails);
-    nextId++;
+    _mint(_marketplaceAddress,nextTrainerId,_amount,_data);
+    Trainer_card_details[nextTrainerId]=trainerCard(nextTrainerId,"trainer",_name,_taskdetails);
+    emit trainerNFT(msg.sender,_amount,nextTrainerId,"trainer",_name,_taskdetails);
+    nextTrainerId++;
     return true;
     }
 
-    function fetchPokemonNfts() public view returns(pokemonCard[] memory)  //function returns all pokenmon NFTs
+    function fetchPokemonNfts() public view returns(pokemonCard[] memory)
     {
-        
-        uint counter;  //counts total pokenmon NFTs
-        uint index=0;  
-        for(uint i=100;i<nextId;i++) //this for loop help us to get latest count of pokemon NFTs
-        {
-            if(keccak256(abi.encodePacked(Pokemon_card_details[i].cardType))==keccak256(abi.encodePacked("pokemon")))
-                {           
-                    counter++; 
-                }
+        pokemonCard[] memory pokemonArray=new pokemonCard[](nextPokemonId);
+        for(uint i=0;i<nextPokemonId;i++){
+            pokemonArray[i]=Pokemon_card_details[i];
         }
-
-        pokemonCard[] memory pokemonArray=new pokemonCard[](counter); //Create local array to store pokemon details
-
-        for(uint i=100;i<nextId;i++) //this for loop help us to store struct values in array
-        {
-            if(keccak256(abi.encodePacked(Pokemon_card_details[i].cardType))==keccak256(abi.encodePacked("pokemon")))
-                {           
-                pokemonArray[index]=Pokemon_card_details[i];
-                index++;
-                }
-        }
-        
         return pokemonArray;
     }
 
-
-
-    function fetchEnergyNfts() public view returns(energyCard[] memory) //function returns all Energy card NFTs
+    function fetchEnergyNfts() public view returns(energyCard[] memory)
     {
-        uint counter;
-        uint index=0;
-        for(uint i=100;i<nextId;i++)
-        {
-            if(keccak256(abi.encodePacked(Energy_card_details[i].cardType))==keccak256(abi.encodePacked("energy")))
-                {           
-                    counter++;
-                }
+        energyCard[] memory enerygyArray=new energyCard[](nextEnergyId);
+        for(uint i=0;i<nextEnergyId;i++){
+            enerygyArray[i]=Energy_card_details[i];
         }
-
-        energyCard[] memory enerygyArray=new energyCard[](counter);
-
-        for(uint i=100;i<nextId;i++)
-        {
-            if(keccak256(abi.encodePacked(Energy_card_details[i].cardType))==keccak256(abi.encodePacked("energy")))
-                {           
-                enerygyArray[index]=Energy_card_details[i];
-                index++;
-                }
-        }
-        
         return enerygyArray;
     }
 
-    function fetchTrainerNfts() public view returns(trainerCard[] memory) //function returns all Trainer card NFTs
+    function fetchTrainerNfts() public view returns(trainerCard[] memory)
     {
-        uint counter;
-        uint index=0;
-        for(uint i=100;i<nextId;i++)
-        {
-            if(keccak256(abi.encodePacked(Trainer_card_details[i].cardType))==keccak256(abi.encodePacked("trainer")))
-                {           
-                    counter++;
-                }
+        trainerCard[] memory trainerArray=new trainerCard[](nextTrainerId);
+        for(uint i=0;i<nextTrainerId;i++){
+            trainerArray[i]=Trainer_card_details[i];
         }
-
-        trainerCard[] memory trainerArray=new trainerCard[](counter);
-
-        for(uint i=100;i<nextId;i++)
-        {
-                if(keccak256(abi.encodePacked(Trainer_card_details[i].cardType))==keccak256(abi.encodePacked("trainer")))
-                {           
-                trainerArray[index]=Trainer_card_details[i];
-                index++;
-                }
-        }
-        
         return trainerArray;
     }
-    
-    
+
+
 
 }

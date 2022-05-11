@@ -9,12 +9,17 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./pokemon.sol";
 
-contract marketPlace is ERC1155Holder{
-    address private pokemonCardAddress = address(0xDA0bab807633f07f013f94DD0E6A4F96F8742B53);
+contract marketPlace is ERC1155Holder, ReentrancyGuard{
+    address pokemonAddress = 0x9240dDc345D7084cC775EB65F91f7194DbBb48d8;
+    address private pokemonCardAddress = address(pokemonAddress);
     PokemonNFTs _pokemon = PokemonNFTs(pokemonCardAddress);
 
+    uint256 buyId;
+    uint256 sellId;
+    uint256 tradeId;
     //Struct For Buy
     struct buyCard {
         uint256 buyId;
@@ -97,18 +102,92 @@ contract marketPlace is ERC1155Holder{
         uint256 indexed timeStamp
     );
 
+    function ce() public 
+    {
+        idToBuyCard[1] = buyCard(
+        1,1,5,address(0),address(0),10,50,block.timestamp
+        );
+    }
+
     //Write Functions
     //Buy Function
-    function buy(uint256 _id, uint256 _amount, uint256 _quantity) public {
-
+    function buy(uint256 _sellId) public payable nonReentrant {
+      //Generate Unique Buy Id
+      buyId++;
+      uint _amount = idToSellCard[_sellId].amount;
+      address _seller = idToSellCard[_sellId].seller;
+      uint _cardId = idToSellCard[_sellId].cardId;
+      uint _quantity = idToSellCard[_sellId].quantity;
+      uint _totalMintedCopies = idToSellCard[_sellId].totalMintedCopies;
+      require(msg.value == _amount, "Please submit the asking price in order to complete the purchase");
+      //Transfer the amout to seller 
+      payable(_seller).transfer(msg.value);
+      //Transfer the nft to the buyer
+      IERC1155(pokemonAddress).safeTransferFrom(
+       address(this),
+       msg.sender,
+       _cardId,
+       _quantity,
+       '0xaa'
+      );
+      //Set Buy Struct
+      idToBuyCard[buyId] = buyCard(
+        buyId,
+        _cardId,
+        _amount,
+        msg.sender,
+        _seller,
+        _quantity,
+        _totalMintedCopies,
+        block.timestamp
+      );
+      idToSellCard[_sellId].quantity = idToSellCard[_sellId].quantity - _quantity;
     }
     //Sell Function
+    function sell(uint256 _cardId, uint256 _amount, uint256 _quantity) public payable nonReentrant
+    {
+        require(_amount > 0, 'Price is too low');
+        //Set Approved True
+        require(_pokemon.isApprovedForAll(msg.sender, address(this)), "Please Approved Your Self");
+        //Generate a new sell Id 
+        sellId++;
+
+         //Transfering nft from owner wallet address to the marketPlace address
+         IERC1155(pokemonAddress).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _cardId,
+            _quantity,
+            '0xaa'
+         );
+
+         //Create Entry In Sell Struct
+         idToSellCard[sellId] = sellCard(
+            sellId,
+            _cardId,
+            _amount,
+            address(0),
+            msg.sender,
+            _quantity,
+            _quantity,
+            //_totalMintedCopies,
+            block.timestamp
+         );
+    }
     //Trade Function
 
     //Read Functions
     //Fetch MarketPlace Cards Function 
-    function fetchAllCards() public view returns(PokemonNFTs.energyCard[] memory){
+    function fetchAllCards() public view returns(PokemonNFTs.pokemonCard[] memory){
+        return _pokemon.fetchPokemonNfts();
+    }
+    //Fetch MarketPlace Cards Function 
+    function fetchAllCards4() public view returns(PokemonNFTs.energyCard[] memory){
         return _pokemon.fetchEnergyNfts();
+    }
+    //Fetch MarketPlace Cards Function 
+    function fetchAllCards3() public view returns(PokemonNFTs.trainerCard[] memory){
+        return _pokemon.fetchTrainerNfts();
     }
 
     struct fetchAllCard{
@@ -119,18 +198,18 @@ contract marketPlace is ERC1155Holder{
 
     mapping(uint256 => fetchAllCard) public idToAllCard;
     
-    function fetchAllCards2() public view returns(fetchAllCard[] memory){
-        uint currentIndex = 0;
-        uint256 finalIdCount = _pokemon.retTotalId();
-        PokemonNFTs.pokemonCard[] memory pokemonCard = _pokemon.fetchPokemonNfts();
-        PokemonNFTs.energyCard[] memory energyCard = _pokemon.fetchEnergyNfts();
-        PokemonNFTs.trainerCard[] memory trainerCard = _pokemon.fetchTrainerNfts();
-        fetchAllCard[] memory ret = new fetchAllCard[](1);
-        fetchAllCard memory fc;
-        fc = fetchAllCard(pokemonCard,energyCard,trainerCard);
+    // function fetchAllCards2() public view returns(fetchAllCard[] memory){
+    //     uint currentIndex = 0;
+    //     uint256 finalIdCount = _pokemon.retTotalId();
+    //     PokemonNFTs.pokemonCard[] memory pokemonCard = _pokemon.fetchPokemonNfts();
+    //     PokemonNFTs.energyCard[] memory energyCard = _pokemon.fetchEnergyNfts();
+    //     PokemonNFTs.trainerCard[] memory trainerCard = _pokemon.fetchTrainerNfts();
+    //     fetchAllCard[] memory ret = new fetchAllCard[](1);
+    //     fetchAllCard memory fc;
+    //     fc = fetchAllCard(pokemonCard,energyCard,trainerCard);
 
-        ret = pokemonCard;
-        ret = energyCard;
-        ret = trainerCard;
-    }   
+    //     ret = pokemonCard;
+    //     ret = energyCard;
+    //     ret = trainerCard;
+    // }   
 }
