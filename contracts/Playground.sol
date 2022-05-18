@@ -27,10 +27,10 @@ contract PlayGround {
          address opponent;
      }
 
-     mapping(address=>PlayerGameSetting) playerGameSettings;
+     mapping(address=>PlayerGameSetting) public playerGameSettings;
      
 
-     address current_turn;
+     address public current_turn;
      address winner;
      
 
@@ -78,7 +78,6 @@ contract PlayGround {
             else
             {
                  revert("Your NFTs is not a pokemon type");
-               flag--;
             }
         }
         return flag==6?true:false;
@@ -101,15 +100,25 @@ contract PlayGround {
         require(player_no.length==2,"at least two player is required to start this game");
         require(playerGameSettings[player_no[0]].active_pokemon > 0 && playerGameSettings[player_no[1]].active_pokemon > 0,"each player have must set their active pokemon");
         require(playerGameSettings[player_no[0]].pokemon_bench[0] > 0 && playerGameSettings[player_no[1]].pokemon_bench[0] > 0,"each Player have must add their pokemon on bench");
-  
+    
         require(setOpponent(),"ERROR: setOpponent function");
         require(flipacoin(),"ERROR: flipacoin function");
-        require(mintPrizeCard(),"ERROR: mintPrizeCard function");
+        // require(mintPrizeCard(),"ERROR: mintPrizeCard function");
         return true;
    }
+    
+
+    function random() private view returns(uint){
+        return uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, player_no)));
+      }
+
 
     function flipacoin() public onlyManager returns(bool)
     {
+        require(current_turn == address(0),"You have already flip the coin");
+        uint index = random() % player_no.length;
+        current_turn=player_no[index];
+        return true;
 
     }
 
@@ -135,6 +144,7 @@ contract PlayGround {
         {
             if(players[msg.sender].card_list[i]==_activePokemonId)
             {
+                playerGameSettings[msg.sender].player_address=msg.sender;
                 playerGameSettings[msg.sender].active_pokemon=_activePokemonId;
                 break;
             }
@@ -146,14 +156,15 @@ contract PlayGround {
 
     }
 
-    function addPokemonInBench(uint[5] memory _benchPokemonId) public onlyPlayer {
-        require(playerGameSettings[msg.sender].pokemon_bench.length == 0,"You already Added Five Pokemon onto bench");
-        uint flag=0;
+    function addPokemonInBench(uint[5] memory _benchPokemonId) public onlyPlayer{
+        require(playerGameSettings[msg.sender].pokemon_bench[0] == 0,"You already Added Five Pokemon onto bench");
+        uint flag;
         for(uint i=0;i<5;i++)
         {
             for(uint j=0;j<6;j++)
             {
-                if(_benchPokemonId[i]==players[msg.sender].card_list[i]){
+                if(_benchPokemonId[i]==players[msg.sender].card_list[j])
+                {
                     if(_benchPokemonId[i] != playerGameSettings[msg.sender].active_pokemon)
                     {
                         flag++;
@@ -184,12 +195,15 @@ contract PlayGround {
 
     function mintPrizeCard() public onlyManager returns(bool)
     {
-
+      
     }
 
-    function setOpponent() private  onlyManager returns(bool)
+    function setOpponent() public  onlyManager  returns(bool)
     {
-
+        require(playerGameSettings[player_no[0]].opponent==address(0) && playerGameSettings[player_no[1]].opponent==address(0),"You have already set the opponent of each player");
+        playerGameSettings[player_no[0]].opponent=player_no[1];
+        playerGameSettings[player_no[1]].opponent=player_no[0];
+        return true;
     }
 
 
