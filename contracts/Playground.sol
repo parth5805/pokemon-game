@@ -272,7 +272,7 @@ contract PlayGround {
             isGameStart=false;
         }
         
-        playerGameSettings[playerGameSettings[msg.sender].opponent].active_pokemon=playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench[0];
+        // playerGameSettings[playerGameSettings[msg.sender].opponent].active_pokemon=playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench[0];
         
         // uint _index;
         // require(_index < playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench.length, "index out of bound");
