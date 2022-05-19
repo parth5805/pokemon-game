@@ -16,6 +16,8 @@ contract PlayGround {
      mapping(address=>Player) public players;
      address[] public player_no;
 
+     bool public isGameStart;
+
      address manager;
      
      struct PlayerGameSetting{
@@ -23,7 +25,7 @@ contract PlayGround {
          uint active_pokemon;
          uint[5] pokemon_bench;
          uint current_hp;
-         bool is_knocked;
+         mapping(uint=>bool) is_knocked;
          address opponent;
      }
 
@@ -104,6 +106,7 @@ contract PlayGround {
         require(setOpponent(),"ERROR: setOpponent function");
         require(flipacoin(),"ERROR: flipacoin function");
         // require(mintPrizeCard(),"ERROR: mintPrizeCard function");
+        isGameStart=true;
         return true;
    }
     
@@ -146,6 +149,8 @@ contract PlayGround {
             {
                 playerGameSettings[msg.sender].player_address=msg.sender;
                 playerGameSettings[msg.sender].active_pokemon=_activePokemonId;
+                ( , ,uint _currentHp , , , , , , ,  ) =  _pokemon.Pokemon_card_details(playerGameSettings[msg.sender].active_pokemon);
+                playerGameSettings[msg.sender].current_hp=_currentHp;
                 break;
             }
         }
@@ -188,8 +193,107 @@ contract PlayGround {
 
     }
 
-    function attack() public returns(bool)
+
+    function checkEnergyCardOwnerShip(uint _energyCardId,address _caller) private view returns(bool){
+        
+        if(_pokemon.balanceOf(_caller,_energyCardId) >0){
+            return true;
+        }
+        else
+        {
+            return false;
+        }  
+    }
+
+    function checkEnergyCardQty(uint _energyCardId,uint _quantity,address _caller) private view returns(bool){
+        
+        if(_pokemon.balanceOf(_caller,_energyCardId) >= _quantity){
+            return true;
+        }
+        else
+        {
+            return false;
+        }  
+    }
+
+
+    function checkCardTypeEnergy(uint _energyCardId) private view returns(bool){  
+        (uint _id , , , ) =  _pokemon.Energy_card_details(_energyCardId);
+         if(_id >0)
+            {
+                return true;
+            }
+            else
+            {
+                 return false;
+            }
+           
+    
+    }
+
+
+    function attack(uint _energyCardId,uint _quantity) public onlyPlayer returns(bool)
     {
+        require(checkCardTypeEnergy(_energyCardId),"Your NFTs is not the energy type");
+        require(checkEnergyCardOwnerShip(_energyCardId,msg.sender),"You are not a owner of this energy card");
+        require(checkEnergyCardQty(_energyCardId,_quantity,msg.sender),"You must own the require quantity of energy card");
+        require(isGameStart==true,"This game is not started yet");
+        require(msg.sender==current_turn,"This is not your turn.Please wait for your turn");
+        
+        ( , , , ,string memory _activePokemonType , , , , ,  ) =  _pokemon.Pokemon_card_details(playerGameSettings[msg.sender].active_pokemon);
+        ( , ,string memory _energyCardName , ) =  _pokemon.Energy_card_details(_energyCardId);
+        require(keccak256(abi.encodePacked(_activePokemonType))==keccak256(abi.encodePacked(_energyCardName)),"You are using different energy for your active pokemon card.Please Use Same energy as per your Active Pokemon");
+        ( , , , , , , ,uint _activePokemonQty, ,  ) =  _pokemon.Pokemon_card_details(playerGameSettings[msg.sender].active_pokemon);
+        require(_activePokemonQty==_quantity,"Your energy card quantity is not equal to  required Active Pokemon Quantity");
+
+        uint result;
+        uint opponentCurrentHp=playerGameSettings[playerGameSettings[msg.sender].opponent].current_hp;
+        ( , , , , , , , ,uint activePokemonDamage ,  ) =  _pokemon.Pokemon_card_details(playerGameSettings[msg.sender].active_pokemon);
+        result=opponentCurrentHp-activePokemonDamage;
+        if(result <=0)
+        {
+
+        playerGameSettings[playerGameSettings[msg.sender].opponent].is_knocked[playerGameSettings[playerGameSettings[msg.sender].opponent].active_pokemon]=true;
+        
+        
+        for(uint i=0;i<playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench.length;i++)
+        {
+
+        if(playerGameSettings[playerGameSettings[msg.sender].opponent].is_knocked[playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench[i]]==false)
+        {
+        playerGameSettings[playerGameSettings[msg.sender].opponent].active_pokemon=playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench[i];
+        }
+
+        }
+        
+        if(playerGameSettings[playerGameSettings[msg.sender].opponent].is_knocked[playerGameSettings[playerGameSettings[msg.sender].opponent].active_pokemon]==true)
+        {
+            winner=msg.sender;
+            isGameStart=false;
+        }
+        
+        playerGameSettings[playerGameSettings[msg.sender].opponent].active_pokemon=playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench[0];
+        
+        // uint _index;
+        // require(_index < playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench.length, "index out of bound");
+        // for (uint i = _index; i < playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench.length - 1; i++) {
+        //     playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench[i] = playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench[i + 1];
+        // }
+        // playerGameSettings[playerGameSettings[msg.sender].opponent].pokemon_bench.pop();
+
+
+        
+        ( , ,uint _opponentActivePokemonHp , , , , , , ,  ) =  _pokemon.Pokemon_card_details(playerGameSettings[playerGameSettings[msg.sender].opponent].active_pokemon);
+        playerGameSettings[playerGameSettings[msg.sender].opponent].current_hp=_opponentActivePokemonHp;
+        current_turn=playerGameSettings[msg.sender].opponent;
+        return true;
+        }
+        else
+        {
+            playerGameSettings[playerGameSettings[msg.sender].opponent].current_hp=result;
+            current_turn=playerGameSettings[msg.sender].opponent;
+            return true;
+        }
 
     }
 
