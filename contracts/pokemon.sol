@@ -23,8 +23,9 @@ This structure represents the pokenmon card features
            string name; // name of pokemon
            string pokemonType; //type of pokemon card
            string stage;  //stage of pokemon card
-           string info; //information about pokenmon card
+        //    string info; //information about pokenmon card //removing this due to this error 'Stack too deep'
            string attack;  //number of attack
+           uint quantity; //no of attack card require to attack
            uint damage; //amount of damage
            string weak;  //weak energy point
     }
@@ -56,18 +57,18 @@ This structure represents the trainer card feature
     mapping(uint=>energyCard)  public Energy_card_details;
     mapping(uint=>trainerCard) public Trainer_card_details;
 
-    event pokemonNFT(address indexed _to,uint amount,uint indexed _tokenId,string _cardType,uint _hp,string _name,string _pokemonType,string _stage,string _info,string _attack,uint _damage,string _weak);
+    event pokemonNFT(address indexed _to,uint amount,uint indexed _tokenId,string _cardType,uint _hp,string _name,string _pokemonType,string _stage,string _attack,uint _quantity,uint _damage,string _weak);
     event energyNFT(address indexed _to,uint amount,uint indexed _tokenId,string _cardType,string _name,string _color);
     event trainerNFT(address indexed _to,uint amount,uint indexed _tokenId,string _cardType,string _name,string _taskDetails);
 
 
     constructor() ERC1155("") {}
     
-    function addPokemonCard(address _marketplaceAddress,uint _hp,string memory _name,string memory _pokemonType,string memory _stage,string memory _info,string memory _attack,uint _damage,string memory _weak,uint _amount,bytes memory _data) public onlyOwner returns(bool)
+    function addPokemonCard(address _marketplaceAddress,uint _hp,string memory _name,string memory _pokemonType,string memory _stage,string memory _attack,uint _quantity,uint _damage,string memory _weak,uint _amount,bytes memory _data) public onlyOwner returns(bool)
     {
     _mint(_marketplaceAddress,nextId,_amount,_data);
-    Pokemon_card_details[nextId]=pokemonCard(nextId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
-    emit pokemonNFT(msg.sender,_amount,nextId,"pokemon",_hp,_name,_pokemonType,_stage,_info,_attack,_damage,_weak);
+    Pokemon_card_details[nextId]=pokemonCard(nextId,"pokemon",_hp,_name,_pokemonType,_stage,_attack,_quantity,_damage,_weak);
+    emit pokemonNFT(msg.sender,_amount,nextId,"pokemon",_hp,_name,_pokemonType,_stage,_attack,_quantity,_damage,_weak);
     nextId++;
     return true;
     }
